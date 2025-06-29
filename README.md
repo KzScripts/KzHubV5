@@ -1,199 +1,111 @@
--- Biblioteca Rayfield
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
-local Window = Rayfield:CreateWindow({
-    Name = "Kz Hub | Aimbot",
-    LoadingTitle = "Kz Hub",
-    LoadingSubtitle = "by Kz",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = nil,
-        FileName = "KzHub"
-    },
-    Discord = {
-        Enabled = false
-    },
-    KeySystem = false,
-})
-
-local MainTab = Window:CreateTab("Main", 4483362458)
-
--- Variáveis gerais
+-- KZ HUB - VERSÃO CORRIGIDA
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
 
-local aimbotEnabled = false
-local FOV = 100
-local SpeedValue = 16
-local JumpPower = 50
-local InfJump = false
-local ESPEnabled = false
-
--- Aimbot + FOV círculo
-local fovCircle = Drawing.new("Circle")
-fovCircle.Color = Color3.fromRGB(255, 255, 0)
-fovCircle.Thickness = 2
-fovCircle.Radius = FOV
-fovCircle.Filled = false
-fovCircle.Visible = true
-fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-
-local function GetClosestPlayer()
-    local closest, shortestDistance = nil, FOV
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
-            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
-            if onScreen then
-                local dist = (Vector2.new(pos.X, pos.Y) - fovCircle.Position).Magnitude
-                if dist < shortestDistance then
-                    shortestDistance = dist
-                    closest = player
-                end
-            end
-        end
-    end
-    return closest
+-- Aguarda o jogador carregar completamente
+if not LocalPlayer.Character then
+    LocalPlayer.CharacterAdded:Wait()
 end
 
-RunService.RenderStepped:Connect(function()
-    fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    fovCircle.Radius = FOV
+wait(1) -- Aguarda um pouco mais para garantir carregamento
 
-    if aimbotEnabled then
-        local target = GetClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            local headPos = target.Character.Head.Position
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, headPos)
-        end
+-- LOADING SCREEN
+do
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "KzHubLoading"
+    screenGui.IgnoreGuiInset = true
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(1, 0, 1, 0)
+    mainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = screenGui
+    
+    local logoImage = Instance.new("ImageLabel")
+    logoImage.Size = UDim2.new(0, 96, 0, 96)
+    logoImage.Position = UDim2.new(0.5, -48, 0.25, 0)
+    logoImage.BackgroundTransparency = 1
+    logoImage.ImageTransparency = 1
+    logoImage.Image = "rbxassetid://71567579053009"
+    logoImage.Parent = mainFrame
+    
+    local imageCorner = Instance.new("UICorner")
+    imageCorner.CornerRadius = UDim.new(0.5, 0)
+    imageCorner.Parent = logoImage
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 0, 70)
+    titleLabel.Position = UDim2.new(0, 0, 0.42, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "Logando Como Admin"
+    titleLabel.Font = Enum.Font.GothamBlack
+    titleLabel.TextSize = 42
+    titleLabel.TextColor3 = Color3.new(1, 1, 1)
+    titleLabel.TextStrokeTransparency = 0.2
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.TextYAlignment = Enum.TextYAlignment.Center
+    titleLabel.TextTransparency = 1
+    titleLabel.Parent = mainFrame
+    
+    local subtitleLabel = Instance.new("TextLabel")
+    subtitleLabel.Size = UDim2.new(1, 0, 0, 30)
+    subtitleLabel.Position = UDim2.new(0, 0, 0.56, 0)
+    subtitleLabel.BackgroundTransparency = 1
+    subtitleLabel.Text = "Bem Vindo Ao Kz Hub "
+    subtitleLabel.Font = Enum.Font.GothamBold
+    subtitleLabel.TextSize = 22
+    subtitleLabel.TextColor3 = Color3.new(1, 1, 1)
+    subtitleLabel.TextStrokeTransparency = 0.25
+    subtitleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    subtitleLabel.TextYAlignment = Enum.TextYAlignment.Center
+    subtitleLabel.TextTransparency = 1
+    subtitleLabel.Parent = mainFrame
+    
+    local creditLabel = Instance.new("TextLabel")
+    creditLabel.Size = UDim2.new(1, 0, 0, 26)
+    creditLabel.Position = UDim2.new(0, 0, 0.62, 0)
+    creditLabel.BackgroundTransparency = 1
+    creditLabel.Text = "Dev Team KzHub"
+    creditLabel.Font = Enum.Font.Gotham
+    creditLabel.TextSize = 19
+    creditLabel.TextColor3 = Color3.new(1, 1, 1)
+    creditLabel.TextStrokeTransparency = 0.35
+    creditLabel.TextXAlignment = Enum.TextXAlignment.Center
+    creditLabel.TextYAlignment = Enum.TextYAlignment.Center
+    creditLabel.TextTransparency = 1
+    creditLabel.Parent = mainFrame
+    
+    -- Função de animação
+    local function tweenElement(element, property, value, duration)
+        local tween = TweenService:Create(element, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {[property] = value})
+        tween:Play()
+        return tween
     end
-end)
-
--- ESP persistente
-local function AddESP(player)
-    if not player.Character then return end
-    if player.Character:FindFirstChild("PlayerESP") then return end
-
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "PlayerESP"
-    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-    highlight.OutlineColor = Color3.new(0, 0, 0)
-    highlight.FillTransparency = 0.3
-    highlight.OutlineTransparency = 0.1
-    highlight.Parent = player.Character
+    
+    -- Animações de entrada
+    tweenElement(logoImage, "ImageTransparency", 0, 0.7)
+    wait(0.3)
+    tweenElement(titleLabel, "TextTransparency", 0, 0.7)
+    wait(0.1)
+    tweenElement(subtitleLabel, "TextTransparency", 0, 0.6)
+    wait(0.05)
+    tweenElement(creditLabel, "TextTransparency", 0, 0.6)
+    wait(2.1)
+    wait(1.2)
+    
+    -- Animações de saída
+    tweenElement(logoImage, "ImageTransparency", 1, 0.6)
+    tweenElement(titleLabel, "TextTransparency", 1, 0.6)
+    tweenElement(subtitleLabel, "TextTransparency", 1, 0.6)
+    tweenElement(creditLabel, "TextTransparency", 1, 0.6)
+    wait(0.65)
+    screenGui:Destroy()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/KzScripts/KzHubV6/refs/heads/main/KzHubAdmin.lua"))()
 end
 
-local function HandleCharacter(player)
-    if ESPEnabled then
-        AddESP(player)
-    end
-    player.CharacterAdded:Connect(function()
-        if ESPEnabled then
-            task.wait(0.5)
-            AddESP(player)
-        end
-    end)
-end
-
-local function UpdateESP(enabled)
-    ESPEnabled = enabled
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            if enabled then
-                HandleCharacter(player)
-            else
-                if player.Character and player.Character:FindFirstChild("PlayerESP") then
-                    player.Character.PlayerESP:Destroy()
-                end
-            end
-        end
-    end
-end
-
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        if ESPEnabled then
-            task.wait(0.5)
-            AddESP(player)
-        end
-    end)
-end)
-
--- Inf Jump
-UIS.JumpRequest:Connect(function()
-    if InfJump then
-        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-    end
-end)
-
--- UI Controles
-MainTab:CreateSection("Aimbot Sistem")
-
-MainTab:CreateToggle({
-    Name = "Aimbot Ativar",
-    CurrentValue = false,
-    Callback = function(Value)
-        aimbotEnabled = Value
-    end,
-})
-
-MainTab:CreateSlider({
-    Name = "Tamanho do FOV",
-    Range = {50, 500},
-    Increment = 5,
-    Suffix = "px",
-    CurrentValue = FOV,
-    Callback = function(Value)
-        FOV = Value
-    end,
-})
-
-MainTab:CreateSection("Player Sistem")
-
-MainTab:CreateSlider({
-    Name = "Velocidade (Speed)",
-    Range = {16, 300},
-    Increment = 1,
-    Suffix = "WalkSpeed",
-    CurrentValue = SpeedValue,
-    Callback = function(Value)
-        SpeedValue = Value
-        if LocalPlayer.Character then
-            local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then hum.WalkSpeed = Value end
-        end
-    end,
-})
-
-MainTab:CreateSlider({
-    Name = "Altura do Pulo",
-    Range = {50, 300},
-    Increment = 1,
-    Suffix = "JumpPower",
-    CurrentValue = JumpPower,
-    Callback = function(Value)
-        JumpPower = Value
-        if LocalPlayer.Character then
-            local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then hum.JumpPower = Value end
-        end
-    end,
-})
-
-MainTab:CreateToggle({
-    Name = "Pulo Infinito",
-    CurrentValue = false,
-    Callback = function(Value)
-        InfJump = Value
-    end,
-})
-
-MainTab:CreateToggle({
-    Name = "ESP Jogadores",
-    CurrentValue = false,
-    Callback = function(Value)
-        UpdateESP(Value)
-    end,
-})
